@@ -1,24 +1,26 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const cors = require('cors');
-const helmet = require('helmet');
-const sequelize = require('./config/dbConfig');
+const { sequelize } = require('./models');
+const authroutes = require('./routes/authroutes');
 const studentRoutes = require('./routes/studentRoutes');
-const errorHandler = require('./middlewares/errorHandler');
-const rateLimiter = require('./middlewares/rateLimitMiddleware');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
-app.use(helmet());
-app.use(express.json());
-app.use(rateLimiter);  // Apply rate limiting to all requests
+app.use(bodyParser.json());
 
-app.use('/api/v1/students', studentRoutes);
+// Routes
+app.use('/api/auth', authroutes);
+app.use('/api/students', studentRoutes);
 
-app.use(errorHandler); // Global error handler
-
+// Sync Database and Start Server
 sequelize.sync().then(() => {
-  app.listen(3000, () => {
-    console.log('Server is running on port 3000');
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
   });
+}).catch((err) => {
+  console.error('Unable to connect to the database:', err);
 });
